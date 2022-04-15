@@ -16,6 +16,7 @@ History:
   Date        Author    Description
   2022-03-11  J.Dalby   Initial creation
 """
+from ast import Return
 from sys import argv, exit
 from datetime import datetime, date
 from hashlib import sha256
@@ -72,7 +73,6 @@ def get_image_dir_path():
     else:
         print('Error: Missing path parameter.')
         exit('Script execution aborted')
-
 def get_apod_date():
     """
     Validates the command line parameter that specifies the APOD date.
