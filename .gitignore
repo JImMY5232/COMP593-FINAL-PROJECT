@@ -8,7 +8,6 @@ __pycache__/
 
 #VS FILES
 *.code-workspace
-#json
 .vscode
 
 
