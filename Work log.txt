@@ -3,3 +3,9 @@
 - Copied templates from Dl2 and add it into github
 - Created work log 
 - Ignored a VS file 
+
+2022-04-15
+
+- created a database
+- ignored vscode
+- inserted image to data base

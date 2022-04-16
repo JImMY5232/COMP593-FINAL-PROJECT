@@ -17,6 +17,7 @@ History:
   2022-03-11  J.Dalby   Initial creation
 """
 from ast import Return
+import sqlite3
 from sys import argv, exit
 from datetime import datetime, date
 from hashlib import sha256
@@ -158,7 +159,10 @@ def create_image_db(db_path):
     :param db_path: Path of .db file
     :returns: None
     """
-    return #TODO
+    
+    myConnection = sqlite3.connect(db_path +'.db')
+    
+    return 
 
 def add_image_to_db(db_path, image_path, image_size, image_sha256):
     """
