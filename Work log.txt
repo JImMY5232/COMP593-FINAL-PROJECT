@@ -9,3 +9,7 @@
 - created a database
 - ignored vscode
 - inserted image to data base
+
+2022-04-21
+
+- created the collecting image  and path

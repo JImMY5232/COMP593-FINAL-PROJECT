@@ -22,6 +22,7 @@ from sys import argv, exit
 from datetime import datetime, date
 from hashlib import sha256
 from os import path
+import urllib
 
 def main():
 
@@ -39,7 +40,7 @@ def main():
     apod_info_dict = get_apod_info(apod_date)
     
     # Download today's APOD
-    image_url = "TODO"
+    image_url = https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY
     image_msg = download_apod_image(image_url)
     image_sha256 = "TODO"
     image_size = -1 # TODO
@@ -108,7 +109,10 @@ def get_image_path(image_url, dir_path):
     :param dir_path: Path of directory in which image is saved locally
     :returns: Path at which image is saved locally
     """
-    return "TODO"
+    
+    
+    urllib.urlretrieve("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY", dir_path)
+     return dir_path
 
 def get_apod_info(date):
     """
@@ -135,7 +139,6 @@ def print_apod_info(image_url, image_path, image_size, image_sha256):
 def download_apod_image(image_url):
     """
     Downloads an image from a specified URL.
-
     :param image_url: URL of image
     :returns: Response message that contains image data
     """
