@@ -13,3 +13,7 @@
 2022-04-21
 
 - created the collecting image  and path
+
+2022-04-21
+
+-work with apod image url and download image from url

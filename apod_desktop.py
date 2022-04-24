@@ -22,7 +22,7 @@ from sys import argv, exit
 from datetime import datetime, date
 from hashlib import sha256
 from os import path
-import urllib
+import requests
 
 def main():
 
@@ -40,7 +40,7 @@ def main():
     apod_info_dict = get_apod_info(apod_date)
     
     # Download today's APOD
-    image_url = https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY
+    image_url = "todo"
     image_msg = download_apod_image(image_url)
     image_sha256 = "TODO"
     image_size = -1 # TODO
@@ -109,10 +109,14 @@ def get_image_path(image_url, dir_path):
     :param dir_path: Path of directory in which image is saved locally
     :returns: Path at which image is saved locally
     """
+    date = get_apod_date
+    apod_dict = get_apod_info(date)
+
+    if apod_dict :
+        print(apod_dict)
+        
+
     
-    
-    urllib.urlretrieve("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY", dir_path)
-     return dir_path
 
 def get_apod_info(date):
     """
@@ -122,7 +126,22 @@ def get_apod_info(date):
     :param date: APOD date formatted as YYYY-MM-DD
     :returns: Dictionary of APOD info
     """    
-    return {"todo" : "TODO"}
+    url = "https://api.nasa.gov/planetary/apod"
+      
+    date = get_apod_date()
+    
+    params ={
+        'api_key':'YwVmnhtmOzEe4RScNIqhfdW4fV9To1SzjTHNBkZg',
+        'date':date,
+        'hd':'true'
+    }
+    
+    resp_msg = requests.get(url, params=params)
+    if  resp_msg:
+        print(resp_msg)
+        return resp_msg['url']
+        
+    
 
 def print_apod_info(image_url, image_path, image_size, image_sha256):
     """
