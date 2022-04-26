@@ -17,14 +17,21 @@ History:
   2022-03-11  J.Dalby   Initial creation
 """
 from ast import Return
+from cgitb import text
+import os
 import sqlite3
+from sre_constants import SUCCESS
 from sys import argv, exit
 from datetime import datetime, date
 from hashlib import sha256
+from typing import Text
 from os import path
+from urllib import response
 import requests
 
 def main():
+
+
 
     # Determine the paths where files are stored
     image_dir_path = get_image_dir_path()
@@ -39,8 +46,8 @@ def main():
     # Get info for the APOD
     apod_info_dict = get_apod_info(apod_date)
     
-    # Download today's APOD
-    image_url = "todo"
+    # Download today's APOD"
+    image_url =  apod_info_dict['hdurl']
     image_msg = download_apod_image(image_url)
     image_sha256 = "TODO"
     image_size = -1 # TODO
@@ -109,11 +116,7 @@ def get_image_path(image_url, dir_path):
     :param dir_path: Path of directory in which image is saved locally
     :returns: Path at which image is saved locally
     """
-    date = get_apod_date
-    apod_dict = get_apod_info(date)
-
-    if apod_dict :
-        print(apod_dict)
+    return
         
 
     
@@ -126,9 +129,8 @@ def get_apod_info(date):
     :param date: APOD date formatted as YYYY-MM-DD
     :returns: Dictionary of APOD info
     """    
-    url = "https://api.nasa.gov/planetary/apod"
+    url_apod = "https://api.nasa.gov/planetary/apod"
       
-    date = get_apod_date()
     
     params ={
         'api_key':'YwVmnhtmOzEe4RScNIqhfdW4fV9To1SzjTHNBkZg',
@@ -136,10 +138,13 @@ def get_apod_info(date):
         'hd':'true'
     }
     
-    resp_msg = requests.get(url, params=params)
-    if  resp_msg:
-        print(resp_msg)
-        return resp_msg['url']
+    resp_msg = requests.get( url_apod,params=params)
+    dict = resp_msg.json()
+    
+    return dict
+
+    
+        
         
     
 
@@ -155,13 +160,25 @@ def print_apod_info(image_url, image_path, image_size, image_sha256):
     """    
     return #TODO
 
-def download_apod_image(image_url):
+def download_apod_image(image_url,):
     """
     Downloads an image from a specified URL.
     :param image_url: URL of image
     :returns: Response message that contains image data
     """
-    return "TODO"
+
+    respons_e = requests.get(image_url)
+
+
+
+    if respons_e.status_code == 200:
+
+
+        with open (path, 'wb') as fp:
+            fp.write(respons_e.content)
+            print('Success')
+
+    return respons_e
 
 def save_image_file(image_msg, image_path):
     """
@@ -172,6 +189,7 @@ def save_image_file(image_msg, image_path):
     :param image_path: Path to save image file
     :returns: None
     """
+
     return #TODO
 
 def create_image_db(db_path):

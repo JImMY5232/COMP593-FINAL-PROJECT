@@ -11,3 +11,5 @@ def fetchAPOD():
   }
   response = requests.get(URL_APOD,params=params).json()
   print(response)
+
+print(fetchAPOD())
