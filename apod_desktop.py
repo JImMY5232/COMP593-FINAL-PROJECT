@@ -18,7 +18,9 @@ History:
 """
 from ast import Return
 from cgitb import text
+from operator import truediv
 import os
+from platform import architecture
 import sqlite3
 from sre_constants import SUCCESS
 from sys import argv, exit
@@ -28,6 +30,7 @@ from typing import Text
 from os import path
 from urllib import response
 import requests
+import hashlib
 
 def main():
 
@@ -36,6 +39,7 @@ def main():
     # Determine the paths where files are stored
     image_dir_path = get_image_dir_path()
     db_path = path.join(image_dir_path, 'apod_images.db')
+    ima_path = path.join(argv[1], 'image.jpg')
 
     # Get the APOD date, if specified as a parameter
     apod_date = get_apod_date()
@@ -45,16 +49,21 @@ def main():
 
     # Get info for the APOD
     apod_info_dict = get_apod_info(apod_date)
+
+    #enclosing hash
+
+    with open(ima_path, 'rb') as f:
+        hash =f.read()
     
     # Download today's APOD"
     image_url =  apod_info_dict['hdurl']
     image_msg = download_apod_image(image_url)
-    image_sha256 = "TODO"
-    image_size = -1 # TODO
+    image_sha256 = hashlib.sha256(hash).hexdigest()
+    image_size = os.path.getsize(ima_path)
     image_path = get_image_path(image_url, image_dir_path)
 
     # Print APOD image information
-    print_apod_info(image_url, image_path, image_size, image_sha256)
+    print_apod_info(image_url, image_path, image_size, image_sha256,)
 
     # Add image to cache if not already present
     if not image_already_in_db(db_path, image_sha256):
@@ -116,7 +125,17 @@ def get_image_path(image_url, dir_path):
     :param dir_path: Path of directory in which image is saved locally
     :returns: Path at which image is saved locally
     """
-    return
+    
+    respons_e = requests.get(image_url)
+
+    dir_path = path.join(argv[1], 'image.jpg')
+
+    if respons_e.status_code == 200:
+        with open (dir_path, 'wb') as fp:
+            fp.write(respons_e.content)
+
+
+    return dir_path
         
 
     
@@ -140,14 +159,9 @@ def get_apod_info(date):
     
     resp_msg = requests.get( url_apod,params=params)
     dict = resp_msg.json()
-    
     return dict
 
     
-        
-        
-    
-
 def print_apod_info(image_url, image_path, image_size, image_sha256):
     """
     Prints information about the APOD
@@ -157,8 +171,14 @@ def print_apod_info(image_url, image_path, image_size, image_sha256):
     :param image_size: Size of image in bytes
     :param image_sha256: SHA-256 of image
     :returns: None
-    """    
-    return #TODO
+    """ 
+    print("         image url ="+image_url)
+    print (" image hash:" + image_sha256)
+    print("size:"+ str(image_size) + " bytes")
+    print("     image path:"+image_path)
+  
+    
+    return None
 
 def download_apod_image(image_url,):
     """
@@ -169,14 +189,18 @@ def download_apod_image(image_url,):
 
     respons_e = requests.get(image_url)
 
+    
 
+    ima_path = path.join(argv[1], 'image.jpg')
 
     if respons_e.status_code == 200:
-
-
-        with open (path, 'wb') as fp:
+        with open (ima_path, 'wb') as fp:
             fp.write(respons_e.content)
-            print('Success')
+        
+        print('downloading image from nasa......Success')
+    else:
+        print("failed")
+        
 
     return respons_e
 
@@ -189,8 +213,14 @@ def save_image_file(image_msg, image_path):
     :param image_path: Path to save image file
     :returns: None
     """
+    dir = path.join(argv[1], 'image.jpg') 
+    image_msg = download_apod_image()
+    
+    
+    with open (dir, 'wb') as fp:
+            fp.write(image_msg)
 
-    return #TODO
+    return None
 
 def create_image_db(db_path):
     """
@@ -201,6 +231,8 @@ def create_image_db(db_path):
     """
     
     myConnection = sqlite3.connect(db_path +'.db')
+    myConnection.commit()
+    myConnection.close()
     
     return 
 
@@ -214,6 +246,7 @@ def add_image_to_db(db_path, image_path, image_size, image_sha256):
     :param image_sha256: SHA-256 of image
     :returns: None
     """
+
     return #TODO
 
 def image_already_in_db(db_path, image_sha256):
@@ -225,7 +258,21 @@ def image_already_in_db(db_path, image_sha256):
     :param image_sha256: SHA-256 of image
     :returns: True if image is already in DB; False otherwise
     """ 
-    return True #TODO
+    db_cxn =sqlite3.connect(db_path)
+    db_cursor = db_cxn.cursor()
+
+    db_cursor.execute("SELECT id FROM image WHERE sha256 = '" + image_sha256 + "'")
+    result = db_cursor.fetchall()
+    db_cxn.close()
+
+    if len(result) > 0:
+        print("Image is already in cache.")
+        return True
+    else:
+        print("New image not in cache.")
+        return False
+
+
 
 def set_desktop_background_image(image_path):
     """
