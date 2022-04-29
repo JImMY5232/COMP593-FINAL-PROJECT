@@ -18,6 +18,7 @@ History:
 """
 from ast import Return
 from cgitb import text
+from multiprocessing import connection
 from operator import truediv
 import os
 from platform import architecture
@@ -31,6 +32,7 @@ from os import path
 from urllib import response
 import requests
 import hashlib
+import ctypes
 
 def main():
 
@@ -39,7 +41,6 @@ def main():
     # Determine the paths where files are stored
     image_dir_path = get_image_dir_path()
     db_path = path.join(image_dir_path, 'apod_images.db')
-    ima_path = path.join(argv[1], 'image.jpg')
 
     # Get the APOD date, if specified as a parameter
     apod_date = get_apod_date()
@@ -52,15 +53,14 @@ def main():
 
     #enclosing hash
 
-    with open(ima_path, 'rb') as f:
-        hash =f.read()
     
     # Download today's APOD"
     image_url =  apod_info_dict['hdurl']
     image_msg = download_apod_image(image_url)
-    image_sha256 = hashlib.sha256(hash).hexdigest()
-    image_size = os.path.getsize(ima_path)
     image_path = get_image_path(image_url, image_dir_path)
+    image_sha256 = imagehash(image_path)
+    image_size = os.path.getsize(image_path)
+
 
     # Print APOD image information
     print_apod_info(image_url, image_path, image_size, image_sha256,)
@@ -128,7 +128,7 @@ def get_image_path(image_url, dir_path):
     
     respons_e = requests.get(image_url)
 
-    dir_path = path.join(argv[1], 'image.jpg')
+    dir_path = path.join(argv[1], image_url.split('/')[-1])
 
     if respons_e.status_code == 200:
         with open (dir_path, 'wb') as fp:
@@ -158,8 +158,21 @@ def get_apod_info(date):
     }
     
     resp_msg = requests.get( url_apod,params=params)
+    if resp_msg.status_code == 200:
+        print("Getting APOD information from NASA........Success")
+    else:
+        print(("Getting APOD information from NASA........Failed"))
+
     dict = resp_msg.json()
     return dict
+
+def imagehash(image_path):
+    with open(image_path, 'rb') as f:
+        hash =f.read()
+    hashvalue = hashlib.sha256(hash).hexdigest()
+
+    return hashvalue
+
 
     
 def print_apod_info(image_url, image_path, image_size, image_sha256):
@@ -172,10 +185,11 @@ def print_apod_info(image_url, image_path, image_size, image_sha256):
     :param image_sha256: SHA-256 of image
     :returns: None
     """ 
-    print("         image url ="+image_url)
-    print (" image hash:" + image_sha256)
-    print("size:"+ str(image_size) + " bytes")
-    print("     image path:"+image_path)
+    print(" APOD information: ")
+    print("         URL: "+image_url)
+    print("         File path:"+image_path)
+    print("         File size:"+str(image_size)+ " bytes")
+    print("         SHA-256:"+image_sha256)
   
     
     return None
@@ -191,13 +205,13 @@ def download_apod_image(image_url,):
 
     
 
-    ima_path = path.join(argv[1], 'image.jpg')
+    ima_path = path.join(argv[1], image_url.split('/')[-1])
 
     if respons_e.status_code == 200:
         with open (ima_path, 'wb') as fp:
             fp.write(respons_e.content)
         
-        print('downloading image from nasa......Success')
+        print('Downloading APOD from NASA......Success')
     else:
         print("failed")
         
@@ -213,14 +227,8 @@ def save_image_file(image_msg, image_path):
     :param image_path: Path to save image file
     :returns: None
     """
-    dir = path.join(argv[1], 'image.jpg') 
-    image_msg = download_apod_image()
-    
-    
-    with open (dir, 'wb') as fp:
-            fp.write(image_msg)
-
-    return None
+     
+    print("Saving image file............success")
 
 def create_image_db(db_path):
     """
@@ -230,7 +238,19 @@ def create_image_db(db_path):
     :returns: None
     """
     
-    myConnection = sqlite3.connect(db_path +'.db')
+    myConnection = sqlite3.connect(db_path)
+
+    myCursor = myConnection.cursor()
+
+    createtable =""" CREATE TABLE IF NOT EXISTS image (id,
+                        image,
+                        sha256,
+                        size
+                        );"""
+    
+    myCursor.execute(createtable)
+    myCursor.fetchall()
+
     myConnection.commit()
     myConnection.close()
     
@@ -244,10 +264,26 @@ def add_image_to_db(db_path, image_path, image_size, image_sha256):
     :param image_path: Path of the image file saved locally
     :param image_size: Size of image in bytes
     :param image_sha256: SHA-256 of image
-    :returns: None
-    """
+    :returns: None  
+    """ 
 
-    return #TODO
+    myConnection = sqlite3.connect(db_path)
+
+    myCursor = myConnection.cursor()
+
+    createtable =""" CREATE TABLE IF NOT EXISTS image (image,sha256,size) VALUES(?,?,?);"""
+    cont = (image_path,image_sha256,str(image_size))
+    
+    myCursor.fetchall()
+
+
+    myConnection.commit()
+    myConnection.close()
+
+    print("Adding image file to db...........success")
+
+
+    return None
 
 def image_already_in_db(db_path, image_sha256):
     """
@@ -258,12 +294,12 @@ def image_already_in_db(db_path, image_sha256):
     :param image_sha256: SHA-256 of image
     :returns: True if image is already in DB; False otherwise
     """ 
-    db_cxn =sqlite3.connect(db_path)
-    db_cursor = db_cxn.cursor()
+    myConnection =sqlite3.connect(db_path)
+    myCursor = myConnection.cursor()
 
-    db_cursor.execute("SELECT id FROM image WHERE sha256 = '" + image_sha256 + "'")
-    result = db_cursor.fetchall()
-    db_cxn.close()
+    myCursor.execute("SELECT id FROM image WHERE sha256 = '" + image_sha256 + "'")
+    result = myCursor.fetchall()
+    myConnection.close()
 
     if len(result) > 0:
         print("Image is already in cache.")
@@ -273,7 +309,6 @@ def image_already_in_db(db_path, image_sha256):
         return False
 
 
-
 def set_desktop_background_image(image_path):
     """
     Changes the desktop wallpaper to a specific image.
@@ -281,6 +316,12 @@ def set_desktop_background_image(image_path):
     :param image_path: Path of image file
     :returns: None
     """
-    return #TODO
+    try:
+        ctypes.windll.user32.SystemParametersInfoW(20, 0, image_path, 0)
+        print("Setting desktop wallpaper.........success")
+    except:
+        print("Error setting desktop background image")
+    return None
+
 
 main()
