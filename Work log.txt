@@ -39,6 +39,15 @@
 
  2022-04-27
 
+ -done some work on db
+
+ -2022-04-29
+
+ -made scrypt in good format
+ -made print output
+ -set desktop background
+ all 
+
 
 
 
